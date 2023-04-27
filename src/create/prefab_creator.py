@@ -29,6 +29,14 @@ def create_square(world: esper.World, size: pygame.Vector2,
     return cuad_entity
 
 
+def create_text(world: esper.World, pos: pygame.Vector2, surf: pygame.Surface):
+    text_entity = world.create_entity()
+    world.add_component(text_entity,
+                        CTransform(pos))
+    world.add_component(text_entity,
+                        CSurface.from_surface(surf))
+
+
 def create_sprite(world: esper.World, pos: pygame.Vector2, vel: pygame.Vector2,
                   surface: pygame.Surface) -> int:
     sprite_entity = world.create_entity()

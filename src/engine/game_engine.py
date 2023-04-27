@@ -1,4 +1,5 @@
 import asyncio
+from gc import get_objects
 import json
 import pygame
 import esper
@@ -26,7 +27,7 @@ from src.ecs.components.tags.c_tag_bullet import CTagBullet
 
 from src.ecs.components.c_input_command import CInputCommand, CommandPhase
 
-from src.create.prefab_creator import create_enemy_spawner, create_input_player, create_player_square, create_bullet
+from src.create.prefab_creator import create_enemy_spawner, create_input_player, create_player_square, create_bullet, create_text
 
 
 class GameEngine:
@@ -76,6 +77,11 @@ class GameEngine:
         self._clean()
 
     def _create(self):
+        arcadeFont = pygame.font.Font("assets/fnt/vrc.ttf",20)
+        titleText = arcadeFont.render('EJERCICIO 4 - SEMANA 4 - ISIS4407', True, (255,255,0), None)
+        titleRect = titleText.get_rect()
+        titleRect.center = (self.screen.get_width() / 2, self.screen.get_height() / 10)
+        create_text(self.ecs_world, titleRect.topleft, titleText)
         self._player_entity = create_player_square(self.ecs_world, self.player_cfg, self.level_01_cfg["player_spawn"])
         self._player_c_v = self.ecs_world.component_for_entity(self._player_entity, CVelocity)
         self._player_c_t = self.ecs_world.component_for_entity(self._player_entity, CTransform)
