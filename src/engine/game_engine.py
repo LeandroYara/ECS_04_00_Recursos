@@ -1,3 +1,4 @@
+import asyncio
 import json
 import pygame
 import esper
@@ -63,7 +64,7 @@ class GameEngine:
         with open("assets/cfg/explosion.json") as explosion_file:
             self.explosion_cfg = json.load(explosion_file)
 
-    def run(self) -> None:
+    async def run(self) -> None:
         self._create()
         self.is_running = True
         while self.is_running:
@@ -71,6 +72,7 @@ class GameEngine:
             self._process_events()
             self._update()
             self._draw()
+            await asyncio.sleep(0)
         self._clean()
 
     def _create(self):
