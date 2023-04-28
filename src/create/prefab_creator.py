@@ -29,12 +29,13 @@ def create_square(world: esper.World, size: pygame.Vector2,
     return cuad_entity
 
 
-def create_text(world: esper.World, pos: pygame.Vector2, surf: pygame.Surface):
+def create_text(world: esper.World, pos: pygame.Vector2, surf: pygame.Surface) -> int:
     text_entity = world.create_entity()
     world.add_component(text_entity,
                         CTransform(pos))
     world.add_component(text_entity,
                         CSurface.from_surface(surf))
+    return text_entity
 
 
 def create_sprite(world: esper.World, pos: pygame.Vector2, vel: pygame.Vector2,
@@ -106,6 +107,10 @@ def create_input_player(world: esper.World):
                         CInputCommand("PLAYER_UP", pygame.K_UP))
     world.add_component(input_down,
                         CInputCommand("PLAYER_DOWN", pygame.K_DOWN))
+    
+    input_pause = world.create_entity()
+    world.add_component(input_pause,
+                        CInputCommand("PLAYER_PAUSE", pygame.K_p))
 
     input_fire = world.create_entity()
     world.add_component(input_fire,

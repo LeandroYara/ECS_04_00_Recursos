@@ -11,6 +11,7 @@ from src.ecs.systems.s_collision_enemy_bullet import system_collision_enemy_bull
 from src.ecs.systems.s_enemy_spawner import system_enemy_spawner
 from src.ecs.systems.s_input_player import system_input_player
 from src.ecs.systems.s_movement import system_movement
+from src.ecs.systems.s_pause import system_pause
 from src.ecs.systems.s_rendering import system_rendering
 from src.ecs.systems.s_screen_bounce import system_screen_bounce
 from src.ecs.systems.s_screen_player import system_screen_player
@@ -81,7 +82,7 @@ class GameEngine:
         titleText = arcadeFont.render('EJERCICIO 4 - SEMANA 4 - ISIS4407', True, (255,255,0), None)
         titleRect = titleText.get_rect()
         titleRect.center = (self.screen.get_width() / 2, self.screen.get_height() / 10)
-        create_text(self.ecs_world, titleRect.topleft, titleText)
+        self.title = create_text(self.ecs_world, titleRect.topleft, titleText)
         self._player_entity = create_player_square(self.ecs_world, self.player_cfg, self.level_01_cfg["player_spawn"])
         self._player_c_v = self.ecs_world.component_for_entity(self._player_entity, CVelocity)
         self._player_c_t = self.ecs_world.component_for_entity(self._player_entity, CTransform)
@@ -152,6 +153,20 @@ class GameEngine:
                 self._player_c_v.vel.y += self.player_cfg["input_velocity"]
             elif c_input.phase == CommandPhase.END:
                 self._player_c_v.vel.y -= self.player_cfg["input_velocity"]
+        if c_input.name == "PLAYER_PAUSE":
+            if c_input.phase == CommandPhase.START:
+                arcadeFont = pygame.font.Font("assets/fnt/vrc.ttf",20)
+                pauseTitle = arcadeFont.render('PAUSA', True, (255,255,0), None)
+                titlePRect = pauseTitle.get_rect()
+                titlePRect.center = (self.screen.get_width() / 2, self.screen.get_height() / 2.2)
+                titlePText = create_text(self.ecs_world, titlePRect.topleft, pauseTitle)
+                pauseDesc = arcadeFont.render('PRESIONE P PARA CONTINUAR', True, (255,255,0), None)
+                descRect = pauseDesc.get_rect()
+                descRect.center = (self.screen.get_width() / 2, self.screen.get_height() / 1.8)
+                descText = create_text(self.ecs_world, descRect.topleft, pauseDesc)
+                GameEngine._draw(self)
+                system_pause(self.ecs_world, self.clock, self._player_c_v, self.framerate,
+                             self.player_cfg["input_velocity"], titlePText, descText)
 
         if c_input.name == "PLAYER_FIRE" and self.num_bullets < self.level_01_cfg["player_spawn"]["max_bullets"]:
             create_bullet(self.ecs_world, c_input.mouse_pos, self._player_c_t.pos,
