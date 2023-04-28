@@ -1,3 +1,4 @@
+import sys
 import pygame
 import esper
 from src.ecs.components.c_velocity import CVelocity
@@ -10,8 +11,9 @@ def system_pause(world:esper.World, clock:pygame.time.Clock, _player_c_v:CVeloci
         events = pygame.event.get()
         for event in events:
             if event.type == pygame.QUIT:
+                pause = False
                 pygame.quit()
-                quit()
+                sys.exit()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_p:
                     pause = False
@@ -35,5 +37,3 @@ def system_pause(world:esper.World, clock:pygame.time.Clock, _player_c_v:CVeloci
                     _player_c_v.vel.y += vel
                 if event.key == pygame.K_DOWN:
                     _player_c_v.vel.y -= vel
-                        
-        pygame.display.update()
