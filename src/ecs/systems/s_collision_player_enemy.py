@@ -5,6 +5,7 @@ from src.ecs.components.c_surface import CSurface
 from src.ecs.components.c_transform import CTransform
 from src.ecs.components.tags.c_tag_enemy import CTagEnemy
 from src.create.prefab_creator import create_explosion
+from src.engine.service_locator import ServiceLocator
 
 
 def system_collision_player_enemy(world: esper.World, player_entity: int,
@@ -24,3 +25,4 @@ def system_collision_player_enemy(world: esper.World, player_entity: int,
             pl_t.pos.x = level_cfg["player_spawn"]["position"]["x"] - pl_s.area.w / 2
             pl_t.pos.y = level_cfg["player_spawn"]["position"]["y"] - pl_s.area.h / 2
             create_explosion(world, c_t.pos, explosion_info)
+            ServiceLocator.sounds_service.play(explosion_info["crash_sound"])

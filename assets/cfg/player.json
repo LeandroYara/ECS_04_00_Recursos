@@ -17,5 +17,7 @@
             }
         ]
     },
-    "input_velocity": 100
+    "input_velocity": 100,
+    "crash_sound": "assets/snd/crash.ogg",
+    "movement_sound": "assets/snd/movement.ogg"
 }

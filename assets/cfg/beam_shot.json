@@ -1,0 +1,5 @@
+{
+    "sound" : "assets/snd/beam_shot.ogg",
+    "image": "assets/img/beam_shot.png",
+    "velocity": 200
+}

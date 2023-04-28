@@ -1,0 +1,61 @@
+{
+    "starting_texts": [
+        {
+            "font": "assets/fnt/vrc.ttf",
+            "content": "EJERCICIO 4 - SEMANA 4 - ISIS4407",
+            "size": 20,
+            "color":
+            {
+                "r": 255,
+                "g": 255,
+                "b": 0
+            }
+        },
+        {
+            "font": "assets/fnt/vrc.ttf",
+            "content": "Disparo especial (click derecho):",
+            "size": 13,
+            "color":
+            {
+                "r": 255,
+                "g": 255,
+                "b": 0
+            }
+        },
+        {
+            "font": "assets/fnt/vrc.ttf",
+            "content": "¡Cargado!",
+            "size": 13,
+            "color":
+            {
+                "r": 255,
+                "g": 255,
+                "b": 0
+            }
+        }
+    ],
+    "pause_menu":[
+        {
+            "font": "assets/fnt/vrc.ttf",
+            "content": "PAUSA",
+            "size": 20,
+            "color":
+            {
+                "r": 255,
+                "g": 255,
+                "b": 0
+            } 
+        },
+        {
+            "font": "assets/fnt/vrc.ttf",
+            "content": "PRESIONE P PARA CONTINUAR",
+            "size": 20,
+            "color":
+            {
+                "r": 255,
+                "g": 255,
+                "b": 0
+            } 
+        }
+    ]
+}

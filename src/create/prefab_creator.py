@@ -29,12 +29,16 @@ def create_square(world: esper.World, size: pygame.Vector2,
     return cuad_entity
 
 
-def create_text(world: esper.World, pos: pygame.Vector2, surf: pygame.Surface) -> int:
+def create_text(world: esper.World, font_route:str, text:str, pos: pygame.Vector2, size: int, color:tuple) -> int:
+    font = pygame.font.Font(font_route, size)
+    text_surf = font.render(text, True, color)
+    text_rect = text_surf.get_rect()
+    text_rect.topleft = (pos[0], pos[1])
     text_entity = world.create_entity()
     world.add_component(text_entity,
                         CTransform(pos))
     world.add_component(text_entity,
-                        CSurface.from_surface(surf))
+                        CSurface.from_surface(text_surf))
     return text_entity
 
 
@@ -115,6 +119,10 @@ def create_input_player(world: esper.World):
     input_fire = world.create_entity()
     world.add_component(input_fire,
                         CInputCommand("PLAYER_FIRE", pygame.BUTTON_LEFT))
+    
+    input_special = world.create_entity()
+    world.add_component(input_special,
+                        CInputCommand("PLAYER_SPECIAL", pygame.BUTTON_RIGHT))
 
 
 def create_bullet(world: esper.World,
@@ -132,6 +140,31 @@ def create_bullet(world: esper.World,
     bullet_entity = create_sprite(world, pos, vel, bullet_surface)
     world.add_component(bullet_entity, CTagBullet())
     ServiceLocator.sounds_service.play(bullet_info["sound"])
+    
+    
+def create_quadshot(world: esper.World,
+                  mouse_pos: pygame.Vector2,
+                  player_pos: pygame.Vector2,
+                  player_size: pygame.Vector2,
+                  beam_info: dict):
+    bullet_surface = ServiceLocator.images_service.get(beam_info["image"])
+    bullet_size = bullet_surface.get_rect().size
+    pos = pygame.Vector2(player_pos.x + (player_size[0] / 2) - (bullet_size[0] / 2),
+                         player_pos.y + (player_size[1] / 2) - (bullet_size[1] / 2))
+    vel = (mouse_pos - player_pos)
+    vel_org = vel.normalize() * beam_info["velocity"]
+    vel_2 = vel_org * -1
+    vel_3 = pygame.Vector2(vel_org.y, vel_org.x)
+    vel_4 = pygame.Vector2(vel_org.y, vel_org.x) * -1
+    bullet1_entity = create_sprite(world, pos * 0.999, vel_org, bullet_surface)
+    world.add_component(bullet1_entity, CTagBullet())
+    bullet2_entity = create_sprite(world, pos * 1.001, vel_2, bullet_surface)
+    world.add_component(bullet2_entity, CTagBullet())
+    bullet3_entity = create_sprite(world, pos * 0.999, vel_3, bullet_surface)
+    world.add_component(bullet3_entity, CTagBullet())
+    bullet4_entity = create_sprite(world, pos * 1.001, vel_4, bullet_surface)
+    world.add_component(bullet4_entity, CTagBullet())
+    ServiceLocator.sounds_service.play(beam_info["sound"])
 
 
 def create_explosion(world: esper.World, pos: pygame.Vector2, explosion_info: dict):

@@ -4,6 +4,7 @@ import json
 import pygame
 import esper
 from src.ecs.systems.s_animation import system_animation
+from src.ecs.systems.s_beam_wait import system_beam_wait
 
 from src.ecs.systems.s_collision_player_enemy import system_collision_player_enemy
 from src.ecs.systems.s_collision_enemy_bullet import system_collision_enemy_bullet
@@ -28,7 +29,8 @@ from src.ecs.components.tags.c_tag_bullet import CTagBullet
 
 from src.ecs.components.c_input_command import CInputCommand, CommandPhase
 
-from src.create.prefab_creator import create_enemy_spawner, create_input_player, create_player_square, create_bullet, create_text
+from src.create.prefab_creator import create_enemy_spawner, create_input_player, create_player_square, create_bullet, create_quadshot, create_text
+from src.engine.service_locator import ServiceLocator
 
 
 class GameEngine:
@@ -51,6 +53,7 @@ class GameEngine:
         self.ecs_world = esper.World()
 
         self.num_bullets = 0
+        self.special_counter = 0
 
     def _load_config_files(self):
         with open("assets/cfg/window.json", encoding="utf-8") as window_file:
@@ -65,6 +68,10 @@ class GameEngine:
             self.bullet_cfg = json.load(bullet_file)
         with open("assets/cfg/explosion.json") as explosion_file:
             self.explosion_cfg = json.load(explosion_file)
+        with open("assets/cfg/beam_shot.json") as beam_shot_file:
+            self.beam_shot_cfg = json.load(beam_shot_file)
+        with open("assets/cfg/interface.json") as interface_file:
+            self.interface_cfg = json.load(interface_file)
 
     async def run(self) -> None:
         self._create()
@@ -78,11 +85,22 @@ class GameEngine:
         self._clean()
 
     def _create(self):
-        arcadeFont = pygame.font.Font("assets/fnt/vrc.ttf",20)
-        titleText = arcadeFont.render('EJERCICIO 4 - SEMANA 4 - ISIS4407', True, (255,255,0), None)
-        titleRect = titleText.get_rect()
-        titleRect.center = (self.screen.get_width() / 2, self.screen.get_height() / 10)
-        self.title = create_text(self.ecs_world, titleRect.topleft, titleText)
+        pos_list = [pygame.Vector2(self.screen.get_width() / 5.5, self.screen.get_height() / 10),
+                    pygame.Vector2(0, self.screen.get_height() / 1.15),
+                    pygame.Vector2(0, self.screen.get_height() / 1.07)]
+        list_count = 0
+        for text in self.interface_cfg["starting_texts"]:
+            font = text["font"]
+            content = text["content"]
+            size = text["size"]
+            color = (text["color"]["r"], text["color"]["g"], text["color"]["b"])
+            if list_count < 2:
+                create_text(self.ecs_world, font, content, pos_list[list_count], size, color)
+                list_count += 1
+            elif list_count == 2:
+                self.spTime = create_text(self.ecs_world, font, content, pos_list[list_count], size, color)
+                self.timer_font = font
+
         self._player_entity = create_player_square(self.ecs_world, self.player_cfg, self.level_01_cfg["player_spawn"])
         self._player_c_v = self.ecs_world.component_for_entity(self._player_entity, CVelocity)
         self._player_c_t = self.ecs_world.component_for_entity(self._player_entity, CTransform)
@@ -108,6 +126,8 @@ class GameEngine:
         system_screen_bounce(self.ecs_world, self.screen)
         system_screen_player(self.ecs_world, self.screen)
         system_screen_bullet(self.ecs_world, self.screen)
+        self.special_counter, self.spTime = system_beam_wait(self.ecs_world, self.screen, self.delta_time,
+                                                             self.special_counter, self.spTime, self.timer_font)
 
         system_collision_enemy_bullet(self.ecs_world, self.explosion_cfg)
         system_collision_player_enemy(self.ecs_world, self._player_entity,
@@ -136,38 +156,52 @@ class GameEngine:
         if c_input.name == "PLAYER_LEFT":
             if c_input.phase == CommandPhase.START:
                 self._player_c_v.vel.x -= self.player_cfg["input_velocity"]
+                ServiceLocator.sounds_service.play(self.player_cfg["movement_sound"])
             elif c_input.phase == CommandPhase.END:
                 self._player_c_v.vel.x += self.player_cfg["input_velocity"]
         if c_input.name == "PLAYER_RIGHT":
             if c_input.phase == CommandPhase.START:
                 self._player_c_v.vel.x += self.player_cfg["input_velocity"]
+                ServiceLocator.sounds_service.play(self.player_cfg["movement_sound"])
             elif c_input.phase == CommandPhase.END:
                 self._player_c_v.vel.x -= self.player_cfg["input_velocity"]
         if c_input.name == "PLAYER_UP":
             if c_input.phase == CommandPhase.START:
                 self._player_c_v.vel.y -= self.player_cfg["input_velocity"]
+                ServiceLocator.sounds_service.play(self.player_cfg["movement_sound"])
             elif c_input.phase == CommandPhase.END:
                 self._player_c_v.vel.y += self.player_cfg["input_velocity"]
         if c_input.name == "PLAYER_DOWN":
             if c_input.phase == CommandPhase.START:
                 self._player_c_v.vel.y += self.player_cfg["input_velocity"]
+                ServiceLocator.sounds_service.play(self.player_cfg["movement_sound"])
             elif c_input.phase == CommandPhase.END:
                 self._player_c_v.vel.y -= self.player_cfg["input_velocity"]
+                
         if c_input.name == "PLAYER_PAUSE":
             if c_input.phase == CommandPhase.START:
-                arcadeFont = pygame.font.Font("assets/fnt/vrc.ttf",20)
-                pauseTitle = arcadeFont.render('PAUSA', True, (255,255,0), None)
-                titlePRect = pauseTitle.get_rect()
-                titlePRect.center = (self.screen.get_width() / 2, self.screen.get_height() / 2.2)
-                titlePText = create_text(self.ecs_world, titlePRect.topleft, pauseTitle)
-                pauseDesc = arcadeFont.render('PRESIONE P PARA CONTINUAR', True, (255,255,0), None)
-                descRect = pauseDesc.get_rect()
-                descRect.center = (self.screen.get_width() / 2, self.screen.get_height() / 1.8)
-                descText = create_text(self.ecs_world, descRect.topleft, pauseDesc)
+                pos_list = [pygame.Vector2(self.screen.get_width() / 2.2, self.screen.get_height() / 2.3),
+                            pygame.Vector2(self.screen.get_width() / 3.7, self.screen.get_height() / 2)]
+                list_count = 0
+                for text in self.interface_cfg["pause_menu"]:
+                    font = text["font"]
+                    content = text["content"]
+                    size = text["size"]
+                    color = (text["color"]["r"], text["color"]["g"], text["color"]["b"])
+                    if list_count < 1:
+                        title_P_text = create_text(self.ecs_world, font, content, pos_list[list_count], size, color)
+                        list_count += 1
+                    elif list_count >= 1:
+                        desc_text = create_text(self.ecs_world, font, content, pos_list[list_count], size, color)
                 GameEngine._draw(self)
                 system_pause(self.ecs_world, self.clock, self._player_c_v, self.framerate,
-                             self.player_cfg["input_velocity"], titlePText, descText)
+                         self.player_cfg["input_velocity"], title_P_text, desc_text)
 
         if c_input.name == "PLAYER_FIRE" and self.num_bullets < self.level_01_cfg["player_spawn"]["max_bullets"]:
             create_bullet(self.ecs_world, c_input.mouse_pos, self._player_c_t.pos,
                           self._player_c_s.area.size, self.bullet_cfg)
+
+        if c_input.name == "PLAYER_SPECIAL" and self.special_counter <= 0:
+            create_quadshot(self.ecs_world, c_input.mouse_pos, self._player_c_t.pos,
+                          self._player_c_s.area.size, self.beam_shot_cfg)
+            self.special_counter = 6

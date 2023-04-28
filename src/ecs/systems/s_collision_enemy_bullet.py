@@ -7,6 +7,7 @@ from src.ecs.components.c_enemy_hunter_state import CEnemyHunterState
 from src.ecs.components.tags.c_tag_enemy import CTagEnemy
 from src.ecs.components.tags.c_tag_bullet import CTagBullet
 from src.create.prefab_creator import create_explosion
+from src.engine.service_locator import ServiceLocator
 
 
 def system_collision_enemy_bullet(world: esper.World, explosion_info: dict):
