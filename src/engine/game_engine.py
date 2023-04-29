@@ -12,7 +12,6 @@ from src.ecs.systems.s_collision_enemy_bullet import system_collision_enemy_bull
 from src.ecs.systems.s_enemy_spawner import system_enemy_spawner
 from src.ecs.systems.s_input_player import system_input_player
 from src.ecs.systems.s_movement import system_movement
-from src.ecs.systems.s_pause import system_pause
 from src.ecs.systems.s_rendering import system_rendering
 from src.ecs.systems.s_screen_bounce import system_screen_bounce
 from src.ecs.systems.s_screen_player import system_screen_player
@@ -45,6 +44,7 @@ class GameEngine:
 
         self.clock = pygame.time.Clock()
         self.is_running = False
+        self.paused = False
         self.framerate = self.window_cfg["framerate"]
         self.delta_time = 0
         self.bg_color = pygame.Color(self.window_cfg["bg_color"]["r"],
@@ -120,25 +120,26 @@ class GameEngine:
                 self.is_running = False
 
     def _update(self):
-        system_enemy_spawner(self.ecs_world, self.enemies_cfg, self.delta_time)
-        system_movement(self.ecs_world, self.delta_time)
+        if self.paused == False:
+            system_enemy_spawner(self.ecs_world, self.enemies_cfg, self.delta_time)
+            system_movement(self.ecs_world, self.delta_time)
 
-        system_screen_bounce(self.ecs_world, self.screen)
-        system_screen_player(self.ecs_world, self.screen)
-        system_screen_bullet(self.ecs_world, self.screen)
-        self.special_counter, self.spTime = system_beam_wait(self.ecs_world, self.screen, self.delta_time,
+            system_screen_bounce(self.ecs_world, self.screen)
+            system_screen_player(self.ecs_world, self.screen)
+            system_screen_bullet(self.ecs_world, self.screen)
+            self.special_counter, self.spTime = system_beam_wait(self.ecs_world, self.screen, self.delta_time,
                                                              self.special_counter, self.spTime, self.timer_font)
 
-        system_collision_enemy_bullet(self.ecs_world, self.explosion_cfg)
-        system_collision_player_enemy(self.ecs_world, self._player_entity,
+            system_collision_enemy_bullet(self.ecs_world, self.explosion_cfg)
+            system_collision_player_enemy(self.ecs_world, self._player_entity,
                                       self.level_01_cfg, self.explosion_cfg)
 
-        system_explosion_kill(self.ecs_world)
+            system_explosion_kill(self.ecs_world)
 
-        system_player_state(self.ecs_world)
-        system_enemy_hunter_state(self.ecs_world, self._player_entity, self.enemies_cfg["TypeHunter"])
+            system_player_state(self.ecs_world)
+            system_enemy_hunter_state(self.ecs_world, self._player_entity, self.enemies_cfg["TypeHunter"])
 
-        system_animation(self.ecs_world, self.delta_time)
+            system_animation(self.ecs_world, self.delta_time)
 
         self.ecs_world._clear_dead_entities()
         self.num_bullets = len(self.ecs_world.get_component(CTagBullet))
@@ -156,29 +157,33 @@ class GameEngine:
         if c_input.name == "PLAYER_LEFT":
             if c_input.phase == CommandPhase.START:
                 self._player_c_v.vel.x -= self.player_cfg["input_velocity"]
-                ServiceLocator.sounds_service.play(self.player_cfg["movement_sound"])
+                if self.paused == False:
+                    ServiceLocator.sounds_service.play(self.player_cfg["movement_sound"])
             elif c_input.phase == CommandPhase.END:
                 self._player_c_v.vel.x += self.player_cfg["input_velocity"]
         if c_input.name == "PLAYER_RIGHT":
             if c_input.phase == CommandPhase.START:
                 self._player_c_v.vel.x += self.player_cfg["input_velocity"]
-                ServiceLocator.sounds_service.play(self.player_cfg["movement_sound"])
+                if self.paused == False:
+                    ServiceLocator.sounds_service.play(self.player_cfg["movement_sound"])
             elif c_input.phase == CommandPhase.END:
                 self._player_c_v.vel.x -= self.player_cfg["input_velocity"]
         if c_input.name == "PLAYER_UP":
             if c_input.phase == CommandPhase.START:
                 self._player_c_v.vel.y -= self.player_cfg["input_velocity"]
-                ServiceLocator.sounds_service.play(self.player_cfg["movement_sound"])
+                if self.paused == False:
+                    ServiceLocator.sounds_service.play(self.player_cfg["movement_sound"])
             elif c_input.phase == CommandPhase.END:
                 self._player_c_v.vel.y += self.player_cfg["input_velocity"]
         if c_input.name == "PLAYER_DOWN":
             if c_input.phase == CommandPhase.START:
                 self._player_c_v.vel.y += self.player_cfg["input_velocity"]
-                ServiceLocator.sounds_service.play(self.player_cfg["movement_sound"])
+                if self.paused == False:
+                    ServiceLocator.sounds_service.play(self.player_cfg["movement_sound"])
             elif c_input.phase == CommandPhase.END:
                 self._player_c_v.vel.y -= self.player_cfg["input_velocity"]
                 
-        if c_input.name == "PLAYER_PAUSE":
+        if c_input.name == "PLAYER_PAUSE" and self.paused == False:
             if c_input.phase == CommandPhase.START:
                 pos_list = [pygame.Vector2(self.screen.get_width() / 2.2, self.screen.get_height() / 2.3),
                             pygame.Vector2(self.screen.get_width() / 3.7, self.screen.get_height() / 2)]
@@ -189,19 +194,22 @@ class GameEngine:
                     size = text["size"]
                     color = (text["color"]["r"], text["color"]["g"], text["color"]["b"])
                     if list_count < 1:
-                        title_P_text = create_text(self.ecs_world, font, content, pos_list[list_count], size, color)
+                        self.title_P_text = create_text(self.ecs_world, font, content, pos_list[list_count], size, color)
                         list_count += 1
                     elif list_count >= 1:
-                        desc_text = create_text(self.ecs_world, font, content, pos_list[list_count], size, color)
-                GameEngine._draw(self)
-                system_pause(self.ecs_world, self.clock, self._player_c_v, self.framerate,
-                         self.player_cfg["input_velocity"], title_P_text, desc_text)
+                        self.desc_text = create_text(self.ecs_world, font, content, pos_list[list_count], size, color)
+                self.paused = True
+        elif c_input.name == "PLAYER_PAUSE" and self.paused == True:
+            if c_input.phase == CommandPhase.START:
+                self.paused = False
+                self.ecs_world.delete_entity(self.title_P_text)
+                self.ecs_world.delete_entity(self.desc_text)
 
-        if c_input.name == "PLAYER_FIRE" and self.num_bullets < self.level_01_cfg["player_spawn"]["max_bullets"]:
+        if c_input.name == "PLAYER_FIRE" and self.num_bullets < self.level_01_cfg["player_spawn"]["max_bullets"] and not self.paused:
             create_bullet(self.ecs_world, c_input.mouse_pos, self._player_c_t.pos,
                           self._player_c_s.area.size, self.bullet_cfg)
 
-        if c_input.name == "PLAYER_SPECIAL" and self.special_counter <= 0:
+        if c_input.name == "PLAYER_SPECIAL" and self.special_counter <= 0 and not self.paused:
             create_quadshot(self.ecs_world, c_input.mouse_pos, self._player_c_t.pos,
                           self._player_c_s.area.size, self.beam_shot_cfg)
             self.special_counter = 6
